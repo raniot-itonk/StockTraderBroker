@@ -1,0 +1,33 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: publicshareownercontrol
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: publicshareownercontrol
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: publicshareownercontrol
+        image: raniotitonk/publicshareownercontrol
+        ports:
+        - containerPort: 80
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Test"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: publicshareownercontrol
+spec:
+  selector:
+    app: publicshareownercontrol
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

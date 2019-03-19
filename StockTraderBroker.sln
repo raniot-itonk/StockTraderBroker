@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.329
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StockTraderBroker", "StockTraderBroker\StockTraderBroker.csproj", "{3461F13A-BFDB-4A95-BDDB-C0DDF447401D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StockTraderBrokerUnitTests", "StockTraderBrokerUnitTests\StockTraderBrokerUnitTests.csproj", "{4EED1476-057F-45DF-9928-8CC11F12E8C6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3461F13A-BFDB-4A95-BDDB-C0DDF447401D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3461F13A-BFDB-4A95-BDDB-C0DDF447401D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3461F13A-BFDB-4A95-BDDB-C0DDF447401D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3461F13A-BFDB-4A95-BDDB-C0DDF447401D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EED1476-057F-45DF-9928-8CC11F12E8C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EED1476-057F-45DF-9928-8CC11F12E8C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EED1476-057F-45DF-9928-8CC11F12E8C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EED1476-057F-45DF-9928-8CC11F12E8C6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9E5170B0-5A1F-4991-97EF-767BBD14E840}
+	EndGlobalSection
+EndGlobal
