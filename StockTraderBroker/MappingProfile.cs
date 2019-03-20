@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using StockTraderBroker.Controllers;
 using StockTraderBroker.DB;
+using StockTraderBroker.Models;
 
 namespace StockTraderBroker
 {
@@ -9,6 +10,7 @@ namespace StockTraderBroker
         public MappingProfile()
         {
             CreateMap<BuyRequestInput, BuyRequest>();
+            CreateMap<SellRequestInput, SellRequest>();
         }
     }
 }

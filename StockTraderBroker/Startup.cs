@@ -54,7 +54,10 @@ namespace StockTraderBroker
             //});
             services.Configure<Services>(Configuration.GetSection(nameof(Services)));
             services.AddScoped<IBankClient, BankClient>();
-            services.AddTransient<IBusinessLogic, BusinessLogic>();
+            services.AddScoped<ITobinTaxerClient, TobinTaxerClient>();
+            services.AddScoped<ITransaction, Transaction>();
+            services.AddTransient<IBuyShares, BuyShares>();
+            services.AddTransient<ISellShares, SellShares>();
             services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
         }
 

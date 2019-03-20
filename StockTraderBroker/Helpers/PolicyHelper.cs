@@ -1,5 +1,7 @@
 ﻿using System;
 using Flurl.Http;
+using Polly;
+using Polly.Retry;
 
 namespace StockTraderBroker.Helpers
 {

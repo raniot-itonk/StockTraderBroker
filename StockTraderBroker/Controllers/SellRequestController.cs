@@ -8,24 +8,24 @@ namespace StockTraderBroker.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BuyRequestController : ControllerBase
+    public class SellRequestController : ControllerBase
     {
         private readonly ILogger<BuyRequestController> _logger;
-        private readonly IBuyShares _buyShares;
+        private readonly ISellShares _sellShares;
 
-        public BuyRequestController(ILogger<BuyRequestController> logger, IBuyShares buyShares)
+        public SellRequestController(ILogger<BuyRequestController> logger, ISellShares sellShares)
         {
             _logger = logger;
-            _buyShares = buyShares;
+            _sellShares = sellShares;
         }
 
         // Add BuyRequest Request
         //[Authorize("BankingService.UserActions")]
         [HttpPost]
-        public async Task<ActionResult> PostBuyRequest(BuyRequestInput buyRequestInput)
+        public async Task<ActionResult> PostSellRequest(SellRequestInput sellRequestInput)
         {
-            _buyShares.AddBuyRequest(buyRequestInput);
-            _logger.LogInformation("Successfully added buy request {@buyRequestInput}", buyRequestInput);
+            _sellShares.AddSellRequest(sellRequestInput);
+            _logger.LogInformation("Successfully added sell request {@sellRequestInput}", sellRequestInput);
             return Ok();
         }
     }

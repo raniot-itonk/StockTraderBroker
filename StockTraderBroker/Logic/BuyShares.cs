@@ -2,29 +2,30 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
-using StockTraderBroker.Clients;
-using StockTraderBroker.Controllers;
+using Microsoft.Extensions.Logging;
 using StockTraderBroker.DB;
 using StockTraderBroker.Models;
 
 namespace StockTraderBroker.Logic
 {
-    public interface IBusinessLogic
+    public interface IBuyShares
     {
         List<ShareTradingInfo> AddBuyRequest(BuyRequestInput buyRequestInput);
     }
 
-    public class BusinessLogic : IBusinessLogic
+    public class BuyShares : IBuyShares
     {
         private readonly IMapper _mapper;
-        private readonly IBankClient _bankClient;
+        private readonly ITransaction _transaction;
         private readonly StockTraderBrokerContext _context;
+        private readonly ILogger<BuyShares> _logger;
 
-        public BusinessLogic(StockTraderBrokerContext context, IMapper mapper, IBankClient bankClient)
+        public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction)
         {
             _context = context;
+            _logger = logger;
             _mapper = mapper;
-            _bankClient = bankClient;
+            _transaction = transaction;
         }
 
         public List<ShareTradingInfo> AddBuyRequest(BuyRequestInput buyRequestInput)
@@ -64,8 +65,7 @@ namespace StockTraderBroker.Logic
             CalculateSellerRemainingSharesAndSharesToBuy(buyRequestInput, sellRequest, out var sellerSharesRemaining, out var sharesToBuy);
             sellRequest.AmountOfShares = sellerSharesRemaining;
             buyRequestInput.AmountOfShares -= sharesToBuy;
-            var amount = sharesToBuy * sellRequest.Price;
-            CreateTransaction(amount, buyRequestInput.AccountId, buyRequestInput.ReserveId, sellRequest.AccountId);
+            _transaction.CreateTransaction(buyRequestInput.Price, sharesToBuy, buyRequestInput.AccountId, buyRequestInput.ReserveId, sellRequest.AccountId, buyRequestInput.StockId);
             return new ShareTradingInfo { Price = sellRequest.Price, Amount = sharesToBuy };
         }
 
@@ -81,24 +81,8 @@ namespace StockTraderBroker.Logic
             {
                 sellerSharesRemaining = 0;
                 _context.Remove(sellRequest);
-                sharesToBuy = buyRequestInput.AmountOfShares - sellRequest.AmountOfShares;
+                sharesToBuy = sellRequest.AmountOfShares;
             }
         }
-
-        public void CreateTransaction(double amount, Guid fromAccountId, Guid reservationId, Guid toAccountId)
-        {
-            // Tax
-
-
-            // Transfer money from buyer to seller
-            _bankClient.CreateTransfer(new TransferRequest{}, "jwtToken");
-        }
-        
-    }
-
-    public class ShareTradingInfo
-    {
-        public double Price { get; set; }
-        public int Amount { get; set; }
     }
 }
