@@ -24,7 +24,7 @@ namespace StockTraderBroker.Controllers
         [HttpPost]
         public async Task<ActionResult> PostBuyRequest(BuyRequestInput buyRequestInput)
         {
-            _buyShares.AddBuyRequest(buyRequestInput);
+             await _buyShares.AddBuyRequest(buyRequestInput);
             _logger.LogInformation("Successfully added buy request {@buyRequestInput}", buyRequestInput);
             return Ok();
         }

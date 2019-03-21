@@ -26,7 +26,7 @@ namespace StockTraderBroker.Clients
         public async Task PostStockTax(StockTaxRequest request, string jwtToken)
         {
             await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
-                _tobinTaxer.BaseAddress.AppendPathSegment(_tobinTaxer.BankPath.StockTax)
+                _tobinTaxer.BaseAddress.AppendPathSegment(_tobinTaxer.TobinTaxerPath.StockTax)
                     .WithOAuthBearerToken(jwtToken).PostJsonAsync(request));
         }
     }

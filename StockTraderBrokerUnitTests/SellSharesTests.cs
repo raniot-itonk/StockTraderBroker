@@ -13,7 +13,7 @@ namespace StockTraderBrokerUnitTests
         private const int DefaultId = 1;
 
         [Fact]
-        public void AddSellRequest_Sell2ForPrice1Where3WithPrice1AreAdded_1ShareSoldFromFirst2InList()
+        public async void AddSellRequest_Sell2ForPrice1Where3WithPrice1AreAdded_1ShareSoldFromFirst2InList()
         {
             // Arrange
             var data = new List<BuyRequest>
@@ -32,7 +32,7 @@ namespace StockTraderBrokerUnitTests
 
             var sellShares = TestHelper.SetupSellSharesForTest(data);
             // Act
-            var shareTradingInfos = sellShares.AddSellRequest(stockSellRequest);
+            var shareTradingInfos = await sellShares.AddSellRequestAsync(stockSellRequest);
 
             // Assert
             Assert.Collection(shareTradingInfos, 
@@ -41,7 +41,7 @@ namespace StockTraderBrokerUnitTests
         }
 
         [Fact]
-        public void AddSellRequest_Sell2ForPrice1Where1WithPrice1x2x3AreAdded_FirstShareSoldFor3SecondFor2()
+        public async System.Threading.Tasks.Task AddSellRequest_Sell2ForPrice1Where1WithPrice1x2x3AreAdded_FirstShareSoldFor3SecondFor2Async()
         {
             // Arrange
             const int price = 2;
@@ -62,7 +62,7 @@ namespace StockTraderBrokerUnitTests
 
             var sellShares = TestHelper.SetupSellSharesForTest(data);
             // Act
-            var shareTradingInfos = sellShares.AddSellRequest(stockSellRequest);
+            var shareTradingInfos = await sellShares.AddSellRequestAsync(stockSellRequest);
 
             // Assert
             Assert.Collection(shareTradingInfos,
@@ -71,7 +71,7 @@ namespace StockTraderBrokerUnitTests
         }
 
         [Fact]
-        public void AddSellRequest_Sell2ForPrice1Where3Buying3WithPrice1_First2bought()
+        public async System.Threading.Tasks.Task AddSellRequest_Sell2ForPrice1Where3Buying3WithPrice1_First2boughtAsync()
         {
             // Arrange
             const int price = 1;
@@ -92,7 +92,7 @@ namespace StockTraderBrokerUnitTests
 
             var sellShares = TestHelper.SetupSellSharesForTest(data);
             // Act
-            var shareTradingInfos = sellShares.AddSellRequest(stockSellRequest);
+            var shareTradingInfos = await sellShares.AddSellRequestAsync(stockSellRequest);
 
             // Assert
             Assert.Collection(shareTradingInfos,

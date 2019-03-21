@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using StockTraderBroker.Clients;
 using StockTraderBroker.DB;
 using StockTraderBroker.Models;
 
@@ -10,33 +12,35 @@ namespace StockTraderBroker.Logic
 {
     public interface IBuyShares
     {
-        List<ShareTradingInfo> AddBuyRequest(BuyRequestInput buyRequestInput);
+        Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestInput buyRequestInput);
     }
 
     public class BuyShares : IBuyShares
     {
         private readonly IMapper _mapper;
         private readonly ITransaction _transaction;
+        private readonly IPublicShareOwnerControlClient _publicShareOwnerControlClient;
         private readonly StockTraderBrokerContext _context;
         private readonly ILogger<BuyShares> _logger;
 
-        public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction)
+        public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient)
         {
             _context = context;
             _logger = logger;
             _mapper = mapper;
             _transaction = transaction;
+            _publicShareOwnerControlClient = publicShareOwnerControlClient;
         }
 
-        public List<ShareTradingInfo> AddBuyRequest(BuyRequestInput buyRequestInput)
+        public async Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestInput buyRequestInput)
         {
             var shareTradingInfos = new List<ShareTradingInfo>();
             var sellerListOrderedByPrice = GetSellerList(buyRequestInput);
 
             foreach (var sellRequest in sellerListOrderedByPrice)
             {
-                var shareTradingInfo = BuyAsManySharesAsPossible(buyRequestInput, sellRequest);
-                shareTradingInfos.Add(shareTradingInfo);
+                var shareTradingInfo = await BuyAsManySharesAsPossible(buyRequestInput, sellRequest);
+                shareTradingInfos.Add( shareTradingInfo);
                 if (buyRequestInput.AmountOfShares == 0)
                     break;
             }
@@ -60,29 +64,39 @@ namespace StockTraderBroker.Logic
                                 sellRequest.Price <= buyRequestInput.Price).OrderBy(sellRequest => sellRequest.Price).ToList();
         }
 
-        private ShareTradingInfo BuyAsManySharesAsPossible(BuyRequestInput buyRequestInput, SellRequest sellRequest)
+        private async Task<ShareTradingInfo> BuyAsManySharesAsPossible(BuyRequestInput buyRequestInput, SellRequest sellRequest)
         {
-            CalculateSellerRemainingSharesAndSharesToBuy(buyRequestInput, sellRequest, out var sellerSharesRemaining, out var sharesToBuy);
-            sellRequest.AmountOfShares = sellerSharesRemaining;
+            var sharesToBuy = CalculateSharesToBuy(buyRequestInput, sellRequest);
             buyRequestInput.AmountOfShares -= sharesToBuy;
-            _transaction.CreateTransaction(buyRequestInput.Price, sharesToBuy, buyRequestInput.AccountId, buyRequestInput.ReserveId, sellRequest.AccountId, buyRequestInput.StockId);
+            await _transaction.CreateTransactionAsync(buyRequestInput.Price, sharesToBuy, sellRequest.AccountId, buyRequestInput.ReserveId, buyRequestInput.AccountId, buyRequestInput.StockId);
+
+            var ownershipRequest = new OwnershipRequest
+            {
+                Amount = sharesToBuy,
+                Buyer = buyRequestInput.AccountId,
+                Seller = sellRequest.AccountId
+            };
+            await _publicShareOwnerControlClient.ChangeOwnership(ownershipRequest, buyRequestInput.StockId, "jwtToken");
+
             return new ShareTradingInfo { Price = sellRequest.Price, Amount = sharesToBuy };
         }
 
-        private void CalculateSellerRemainingSharesAndSharesToBuy(BuyRequestInput buyRequestInput, SellRequest sellRequest, out int sellerSharesRemaining, out int sharesToBuy)
+        private int CalculateSharesToBuy(BuyRequestInput buyRequestInput, SellRequest sellRequest)
         {
+            int sharesToBuy;
             if (sellRequest.AmountOfShares > buyRequestInput.AmountOfShares)
             {
                 _context.Attach(sellRequest);
-                sellerSharesRemaining = sellRequest.AmountOfShares - buyRequestInput.AmountOfShares;
+                sellRequest.AmountOfShares = sellRequest.AmountOfShares - buyRequestInput.AmountOfShares;
                 sharesToBuy = buyRequestInput.AmountOfShares;
             }
             else
             {
-                sellerSharesRemaining = 0;
                 _context.Remove(sellRequest);
                 sharesToBuy = sellRequest.AmountOfShares;
             }
+
+            return sharesToBuy;
         }
     }
 }

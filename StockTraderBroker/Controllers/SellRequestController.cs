@@ -24,7 +24,7 @@ namespace StockTraderBroker.Controllers
         [HttpPost]
         public async Task<ActionResult> PostSellRequest(SellRequestInput sellRequestInput)
         {
-            _sellShares.AddSellRequest(sellRequestInput);
+            await _sellShares.AddSellRequestAsync(sellRequestInput);
             _logger.LogInformation("Successfully added sell request {@sellRequestInput}", sellRequestInput);
             return Ok();
         }

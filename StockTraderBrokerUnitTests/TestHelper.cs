@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.EntityFrameworkCore;
+using StockTraderBroker.Clients;
 using StockTraderBroker.DB;
 using StockTraderBroker.Logic;
 
@@ -20,8 +21,9 @@ namespace StockTraderBrokerUnitTests
             var instance = Mapper.Instance;
             var loggerMock = new Mock<ILogger<SellShares>>();
             var transactionMock = new Mock<ITransaction>();
+            var publicShareOwnerControlMock = new Mock<IPublicShareOwnerControlClient>();
 
-            var businessLogic = new SellShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object);
+            var businessLogic = new SellShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object, publicShareOwnerControlMock.Object);
             return businessLogic;
         }
 
@@ -35,8 +37,9 @@ namespace StockTraderBrokerUnitTests
             var instance = Mapper.Instance;
             var loggerMock = new Mock<ILogger<BuyShares>>();
             var transactionMock = new Mock<ITransaction>();
+            var publicShareOwnerControlMock = new Mock<IPublicShareOwnerControlClient>();
 
-            var businessLogic = new BuyShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object);
+            var businessLogic = new BuyShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object, publicShareOwnerControlMock.Object);
             return businessLogic;
         }
     }

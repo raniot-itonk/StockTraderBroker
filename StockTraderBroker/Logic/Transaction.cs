@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using StockTraderBroker.Clients;
 using StockTraderBroker.Models;
@@ -7,8 +8,8 @@ namespace StockTraderBroker.Logic
 {
     public interface ITransaction
     {
-        void CreateTransaction(double price, int amount, Guid fromAccountId, Guid reservationId,
-            Guid toAccountId, long stockId);
+        Task CreateTransactionAsync(double price, int amount, Guid sellerId, Guid reservationId,
+            Guid buyerId, long stockId);
     }
 
     public class Transaction : ITransaction
@@ -24,8 +25,7 @@ namespace StockTraderBroker.Logic
             _bankClient = bankClient;
         }
 
-        public void CreateTransaction(double price, int amount, Guid fromAccountId, Guid reservationId,
-            Guid toAccountId, long stockId)
+        public async Task CreateTransactionAsync(double price, int amount, Guid sellerId, Guid reservationId, Guid buyerId, long stockId)
         {
             // Tax
             var stockTaxRequest = new StockTaxRequest
@@ -33,11 +33,11 @@ namespace StockTraderBroker.Logic
                 Price = price,
                 Amount = amount,
                 ReservationId = reservationId,
-                Buyer = toAccountId,
-                Seller = fromAccountId,
+                Buyer = buyerId,
+                Seller = sellerId,
                 StockId = stockId
             };
-            _tobinTaxerClient.PostStockTax(stockTaxRequest, "jwtToken");
+            await _tobinTaxerClient.PostStockTax(stockTaxRequest, "jwtToken");
             _logger.LogInformation("Payed taxes, {@stockTaxRequest}", stockTaxRequest);
 
             // Transfer money from buyer to seller
@@ -45,11 +45,11 @@ namespace StockTraderBroker.Logic
             var transferRequest = new TransferRequest
             {
                 Amount = totalAmount,
-                FromAccountId = fromAccountId,
+                FromAccountId = buyerId,
                 ReservationId = reservationId,
-                ToAccountId = toAccountId
+                ToAccountId = sellerId
             };
-            _bankClient.CreateTransfer(transferRequest, "jwtToken");
+            await _bankClient.CreateTransfer(transferRequest, "jwtToken");
             _logger.LogInformation("transferred from money from buyer to seller {@transferRequest}", transferRequest);
         }
     }

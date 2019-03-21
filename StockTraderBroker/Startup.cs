@@ -55,6 +55,7 @@ namespace StockTraderBroker
             services.Configure<Services>(Configuration.GetSection(nameof(Services)));
             services.AddScoped<IBankClient, BankClient>();
             services.AddScoped<ITobinTaxerClient, TobinTaxerClient>();
+            services.AddScoped<IPublicShareOwnerControlClient, PublicShareOwnerControlClient>();
             services.AddScoped<ITransaction, Transaction>();
             services.AddTransient<IBuyShares, BuyShares>();
             services.AddTransient<ISellShares, SellShares>();
@@ -62,7 +63,7 @@ namespace StockTraderBroker
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, DB.StockTraderBrokerContext context)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, StockTraderBrokerContext context)
         {
             app.UseAuthentication();
             if (env.IsDevelopment())
@@ -93,7 +94,7 @@ namespace StockTraderBroker
 
         private void SetupDatabase(IServiceCollection services)
         {
-            services.AddDbContext<DB.StockTraderBrokerContext>
+            services.AddDbContext<StockTraderBrokerContext>
                 (options => options.UseSqlServer(Configuration.GetConnectionString("StockTraderBrokerDatabase")));
         }
     }

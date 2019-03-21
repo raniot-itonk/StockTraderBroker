@@ -15,7 +15,7 @@ namespace StockTraderBrokerUnitTests
         private const int DefaultId = 1;
 
         [Fact]
-        public void AddBuyRequest_Buy2ForPrice1Where3WithPrice1AreAdded_1ShareBoughtFromFirst2InList()
+        public async void AddBuyRequest_Buy2ForPrice1Where3WithPrice1AreAdded_1ShareBoughtFromFirst2InList()
         {
             // Arrange
             var sellRequests = new List<SellRequest>
@@ -34,7 +34,7 @@ namespace StockTraderBrokerUnitTests
 
             var buyShares = TestHelper.SetupBuySharesForTest(sellRequests);
             // Act
-            var shareTradingInfos = buyShares.AddBuyRequest(stockBuyRequest);
+            var shareTradingInfos = await buyShares.AddBuyRequest(stockBuyRequest);
 
             // Assert
             Assert.Collection(shareTradingInfos, 
@@ -43,7 +43,7 @@ namespace StockTraderBrokerUnitTests
         }
 
         [Fact]
-        public void AddBuyRequest_Buy3ForPrice2Where3WithPrice1x2x3AreAdded_FirstShareBoughtFor1SecondFor2()
+        public async System.Threading.Tasks.Task AddBuyRequest_Buy3ForPrice2Where3WithPrice1x2x3AreAdded_FirstShareBoughtFor1SecondFor2Async()
         {
             // Arrange
             const int price = 2;
@@ -64,7 +64,7 @@ namespace StockTraderBrokerUnitTests
 
             var buyShares = TestHelper.SetupBuySharesForTest(sellRequests);
             // Act
-            var shareTradingInfos = buyShares.AddBuyRequest(stockBuyRequest);
+            var shareTradingInfos = await buyShares.AddBuyRequest(stockBuyRequest);
 
             // Assert
             Assert.Collection(shareTradingInfos,
