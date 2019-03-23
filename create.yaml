@@ -1,18 +1,18 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: publicshareownercontrol
+  name: stocktraderbroker
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: publicshareownercontrol
+        app: stocktraderbroker
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-      - name: publicshareownercontrol
-        image: raniotitonk/publicshareownercontrol
+      - name: stocktraderbroker
+        image: raniotitonk/stocktraderbroker
         ports:
         - containerPort: 80
         env:
@@ -22,10 +22,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: publicshareownercontrol
+  name: stocktraderbroker
 spec:
   selector:
-    app: publicshareownercontrol
+    app: stocktraderbroker
   ports:
     - protocol: TCP
       port: 80
