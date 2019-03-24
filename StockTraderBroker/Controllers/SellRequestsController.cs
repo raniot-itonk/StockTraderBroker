@@ -8,12 +8,12 @@ namespace StockTraderBroker.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SellRequestController : ControllerBase
+    public class SellRequestsController : ControllerBase
     {
-        private readonly ILogger<BuyRequestController> _logger;
+        private readonly ILogger<BuyRequestsController> _logger;
         private readonly ISellShares _sellShares;
 
-        public SellRequestController(ILogger<BuyRequestController> logger, ISellShares sellShares)
+        public SellRequestsController(ILogger<BuyRequestsController> logger, ISellShares sellShares)
         {
             _logger = logger;
             _sellShares = sellShares;
