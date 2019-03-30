@@ -22,7 +22,7 @@ namespace StockTraderBrokerUnitTests
                 new BuyRequest{ StockId = DefaultId, Price = 1, AmountOfShares = 1, TimeOut = DateTime.Now.AddDays(1)},
                 new BuyRequest{ StockId = DefaultId, Price = 1, AmountOfShares = 1, TimeOut = DateTime.Now.AddDays(1)}
             }.OrderByDescending(request => request.Price).ToList();
-            var stockSellRequest = new SellRequestInput()
+            var stockSellRequest = new SellRequestModel()
             {
                 StockId = DefaultId,
                 Price = 1,
@@ -52,7 +52,7 @@ namespace StockTraderBrokerUnitTests
                 new BuyRequest{ StockId = DefaultId, Price = 2, AmountOfShares = 1, TimeOut = DateTime.Now.AddDays(1)},
                 new BuyRequest{ StockId = DefaultId, Price = 3, AmountOfShares = 1, TimeOut = DateTime.Now.AddDays(1)}
             }.Where(x => x.Price >= price).OrderByDescending(request => request.Price).ToList();
-            var stockSellRequest = new SellRequestInput()
+            var stockSellRequest = new SellRequestModel()
             {
                 StockId = DefaultId,
                 Price = price,
@@ -82,7 +82,7 @@ namespace StockTraderBrokerUnitTests
                 new BuyRequest{ StockId = DefaultId, Price = 1, AmountOfShares = 3, TimeOut = DateTime.Now.AddDays(1)},
                 new BuyRequest{ StockId = DefaultId, Price = 1, AmountOfShares = 3, TimeOut = DateTime.Now.AddDays(1)}
             }.Where(x => x.Price >= price).OrderByDescending(request => request.Price).ToList();
-            var stockSellRequest = new SellRequestInput()
+            var stockSellRequest = new SellRequestModel()
             {
                 StockId = DefaultId,
                 Price = price,

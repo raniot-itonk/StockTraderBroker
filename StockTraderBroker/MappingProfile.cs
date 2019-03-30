@@ -10,7 +10,8 @@ namespace StockTraderBroker
         public MappingProfile()
         {
             CreateMap<BuyRequestInput, BuyRequest>();
-            CreateMap<SellRequestInput, SellRequest>();
+            CreateMap<SellRequestModel, SellRequest>();
+            CreateMap<SellRequest, SellRequestModel>();
         }
     }
 }
