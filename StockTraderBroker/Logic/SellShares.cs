@@ -78,6 +78,9 @@ namespace StockTraderBroker.Logic
                 Seller = sellRequestInput.AccountId
             };
             await _publicShareOwnerControlClient.ChangeOwnership(ownershipRequest, buyRequest.StockId, "jwtToken");
+
+            var lastTradedValueRequest = new LastTradedValueRequest{Id = buyRequest.StockId, Value = sellRequestInput.Price};
+            await _publicShareOwnerControlClient.UpdateLastTradedValue(lastTradedValueRequest, buyRequest.StockId, "jwtToken");
             return new ShareTradingInfo { Price = buyRequest.Price, Amount = sharesToSell };
         }
 
