@@ -23,16 +23,18 @@ namespace StockTraderBroker.Logic
         private readonly IMapper _mapper;
         private readonly ITransaction _transaction;
         private readonly IPublicShareOwnerControlClient _publicShareOwnerControlClient;
+        private readonly IBankClient _bankClient;
         private readonly StockTraderBrokerContext _context;
         private readonly ILogger<SellShares> _logger;
 
-        public SellShares(StockTraderBrokerContext context, ILogger<SellShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient)
+        public SellShares(StockTraderBrokerContext context, ILogger<SellShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient)
         {
             _context = context;
             _logger = logger;
             _mapper = mapper;
             _transaction = transaction;
             _publicShareOwnerControlClient = publicShareOwnerControlClient;
+            _bankClient = bankClient;
         }
 
         public async Task<List<SellRequestModel>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId)
@@ -82,7 +84,7 @@ namespace StockTraderBroker.Logic
         {
             var sharesToSell = CalculateSharesToSeller(buyRequest, sellRequestModel);
             sellRequestModel.AmountOfShares -= sharesToSell;
-            await _transaction.CreateTransactionAsync(buyRequest.Price, sharesToSell, sellRequestModel.AccountId, buyRequest.ReserveId, buyRequest.AccountId, buyRequest.StockId);
+            await _transaction.CreateTransactionAsync(sellRequestModel.Price, sharesToSell, sellRequestModel.AccountId, buyRequest.ReserveId, buyRequest.AccountId, buyRequest.StockId);
 
             var ownershipRequest = new OwnershipRequest
             {
@@ -110,6 +112,7 @@ namespace StockTraderBroker.Logic
             {
                 _context.Remove(buyRequest);
                 sharesToSell = buyRequest.AmountOfShares;
+                _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
             }
 
             return sharesToSell;

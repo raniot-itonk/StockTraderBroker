@@ -12,6 +12,7 @@ namespace StockTraderBroker.Clients
     public interface IBankClient
     {
         Task CreateTransfer(TransferRequest request, string jwtToken);
+        Task RemoveReservation(Guid id, string jwtToken);
     }
 
     public class BankClient : IBankClient
@@ -28,6 +29,13 @@ namespace StockTraderBroker.Clients
             await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
                 _bankService.BaseAddress.AppendPathSegment(_bankService.BankPath.Transfer)
                     .WithOAuthBearerToken(jwtToken).PutJsonAsync(request));
+        }
+
+        public async Task RemoveReservation(Guid id, string jwtToken)
+        {
+            await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
+                _bankService.BaseAddress.AppendPathSegments(_bankService.BankPath.Reservation, id)
+                    .WithOAuthBearerToken(jwtToken).DeleteAsync());
         }
     }
 }

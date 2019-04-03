@@ -20,16 +20,18 @@ namespace StockTraderBroker.Logic
         private readonly IMapper _mapper;
         private readonly ITransaction _transaction;
         private readonly IPublicShareOwnerControlClient _publicShareOwnerControlClient;
+        private readonly IBankClient _bankClient;
         private readonly StockTraderBrokerContext _context;
         private readonly ILogger<BuyShares> _logger;
 
-        public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient)
+        public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient)
         {
             _context = context;
             _logger = logger;
             _mapper = mapper;
             _transaction = transaction;
             _publicShareOwnerControlClient = publicShareOwnerControlClient;
+            _bankClient = bankClient;
         }
 
         public async Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestInput buyRequestInput)
@@ -68,7 +70,7 @@ namespace StockTraderBroker.Logic
         {
             var sharesToBuy = CalculateSharesToBuy(buyRequestInput, sellRequest);
             buyRequestInput.AmountOfShares -= sharesToBuy;
-            await _transaction.CreateTransactionAsync(buyRequestInput.Price, sharesToBuy, sellRequest.AccountId, buyRequestInput.ReserveId, buyRequestInput.AccountId, buyRequestInput.StockId);
+            await _transaction.CreateTransactionAsync(sellRequest.Price, sharesToBuy, sellRequest.AccountId, buyRequestInput.ReserveId, buyRequestInput.AccountId, buyRequestInput.StockId);
 
             var ownershipRequest = new OwnershipRequest
             {
@@ -92,9 +94,11 @@ namespace StockTraderBroker.Logic
                 _context.Attach(sellRequest);
                 sellRequest.AmountOfShares = sellRequest.AmountOfShares - buyRequestInput.AmountOfShares;
                 sharesToBuy = buyRequestInput.AmountOfShares;
+                _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
             }
             else
             {
+                if(sellRequest.AmountOfShares == buyRequestInput.AmountOfShares) _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
                 _context.Remove(sellRequest);
                 sharesToBuy = sellRequest.AmountOfShares;
             }
