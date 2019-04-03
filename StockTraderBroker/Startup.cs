@@ -60,6 +60,7 @@ namespace StockTraderBroker
             services.AddTransient<IBuyShares, BuyShares>();
             services.AddTransient<ISellShares, SellShares>();
             services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
+            services.AddHostedService<CleanUpOldRequestsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
