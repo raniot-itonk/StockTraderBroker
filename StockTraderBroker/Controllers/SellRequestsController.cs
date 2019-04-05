@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using StockTraderBroker.Exceptions;
 using StockTraderBroker.Logic;
 using StockTraderBroker.Models;
 
@@ -25,11 +26,18 @@ namespace StockTraderBroker.Controllers
         // Add BuyRequest Request
         //[Authorize("BankingService.UserActions")]
         [HttpPost]
-        public async Task<ActionResult> PostSellRequest(SellRequestModel sellRequestModel)
+        public async Task<ActionResult<ValidationResult>> PostSellRequest(SellRequestModel sellRequestModel)
         {
-            await _sellShares.AddSellRequestAsync(sellRequestModel);
-            _logger.LogInformation("Successfully added sell request {@sellRequestModel}", sellRequestModel);
-            return Ok();
+            try
+            {
+                await _sellShares.AddSellRequestAsync(sellRequestModel);
+                _logger.LogInformation("Successfully added sell request {@sellRequestModel}", sellRequestModel);
+                return new ValidationResult { Valid = true, ErrorMessage = "" };
+            }
+            catch (ValidationException e)
+            {
+                return new ValidationResult { Valid = false, ErrorMessage = e.Message };
+            }
         }
 
         [HttpGet]

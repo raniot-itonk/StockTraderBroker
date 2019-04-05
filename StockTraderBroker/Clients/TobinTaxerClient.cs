@@ -11,7 +11,7 @@ namespace StockTraderBroker.Clients
 {
     public interface ITobinTaxerClient
     {
-        Task PostStockTax(StockTaxRequest request, string jwtToken);
+        Task<ValidationResult> PostStockTax(StockTaxRequest request, string jwtToken);
     }
 
     public class TobinTaxerClient : ITobinTaxerClient
@@ -23,11 +23,11 @@ namespace StockTraderBroker.Clients
             _tobinTaxer = serviceOption.CurrentValue.TobinTaxer ??
                            throw new ArgumentNullException(nameof(serviceOption.CurrentValue.TobinTaxer));
         }
-        public async Task PostStockTax(StockTaxRequest request, string jwtToken)
+        public async Task<ValidationResult> PostStockTax(StockTaxRequest request, string jwtToken)
         {
-            await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
+            return await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
                 _tobinTaxer.BaseAddress.AppendPathSegment(_tobinTaxer.TobinTaxerPath.StockTax)
-                    .WithOAuthBearerToken(jwtToken).PostJsonAsync(request));
+                    .WithOAuthBearerToken(jwtToken).PostJsonAsync(request).ReceiveJson<ValidationResult>());
         }
     }
 }

@@ -11,7 +11,7 @@ namespace StockTraderBroker.Clients
 {
     public interface IBankClient
     {
-        Task CreateTransfer(TransferRequest request, string jwtToken);
+        Task<ValidationResult> CreateTransfer(TransferRequest request, string jwtToken);
         Task RemoveReservation(Guid id, string jwtToken);
     }
 
@@ -24,11 +24,11 @@ namespace StockTraderBroker.Clients
             _bankService = serviceOption.CurrentValue.BankService ??
                            throw new ArgumentNullException(nameof(serviceOption.CurrentValue.BankService));
         }
-        public async Task CreateTransfer(TransferRequest request, string jwtToken)
+        public async Task<ValidationResult> CreateTransfer(TransferRequest request, string jwtToken)
         {
-            await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
+            return await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
                 _bankService.BaseAddress.AppendPathSegment(_bankService.BankPath.Transfer)
-                    .WithOAuthBearerToken(jwtToken).PutJsonAsync(request));
+                    .WithOAuthBearerToken(jwtToken).PutJsonAsync(request).ReceiveJson<ValidationResult>());
         }
 
         public async Task RemoveReservation(Guid id, string jwtToken)

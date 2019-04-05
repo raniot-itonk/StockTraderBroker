@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using StockTraderBroker.Clients;
+using StockTraderBroker.Exceptions;
 using StockTraderBroker.Models;
 
 namespace StockTraderBroker.Logic
@@ -37,7 +38,12 @@ namespace StockTraderBroker.Logic
                 Seller = sellerId,
                 StockId = stockId
             };
-            await _tobinTaxerClient.PostStockTax(stockTaxRequest, "jwtToken");
+            var validationResultTaxer = await _tobinTaxerClient.PostStockTax(stockTaxRequest, "jwtToken");
+            if (!validationResultTaxer.Valid)
+            {
+                _logger.LogWarning("Failed to pay taxes with the following error {Error}", validationResultTaxer.ErrorMessage);
+                throw new ValidationException(validationResultTaxer.ErrorMessage;
+            }
             _logger.LogInformation("Payed taxes, {@stockTaxRequest}", stockTaxRequest);
 
             // Transfer money from buyer to seller
@@ -49,7 +55,12 @@ namespace StockTraderBroker.Logic
                 ReservationId = reservationId,
                 ToAccountId = sellerId
             };
-            await _bankClient.CreateTransfer(transferRequest, "jwtToken");
+            var validationResultTransfer = await _bankClient.CreateTransfer(transferRequest, "jwtToken");
+            if (!validationResultTransfer.Valid)
+            {
+                _logger.LogWarning("Failed to transfer monet from buyer to seller {@transferRequest}", transferRequest);
+                throw new ValidationException(validationResultTransfer.ErrorMessage);
+            }
             _logger.LogInformation("transferred from money from buyer to seller {@transferRequest}", transferRequest);
         }
     }
