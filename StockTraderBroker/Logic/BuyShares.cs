@@ -72,7 +72,11 @@ namespace StockTraderBroker.Logic
             buyRequestInput.AmountOfShares -= sharesToBuy;
             await _transaction.CreateTransactionAsync(sellRequest.Price, sharesToBuy, sellRequest.AccountId, buyRequestInput.ReserveId, buyRequestInput.AccountId, buyRequestInput.StockId);
             _logger.LogWarning($"This is Anders's test {sharesToBuy} and {buyRequestInput.AmountOfShares}");
-            if (buyRequestInput.AmountOfShares == 0) await _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
+            if (buyRequestInput.AmountOfShares == 0)
+            {
+                _logger.LogWarning(@"Trying to remove Reservation buyRequestInput {@buyRequestInput} sellRequest {@sellRequest}", buyRequestInput, sellRequest);
+                await _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
+            }
 
             var ownershipRequest = new OwnershipRequest
             {
