@@ -84,8 +84,9 @@ namespace StockTraderBroker.Logic
         {
             var sharesToSell = CalculateSharesToSeller(buyRequest, sellRequestModel);
             sellRequestModel.AmountOfShares -= sharesToSell;
-            await _transaction.CreateTransactionAsync(sellRequestModel.Price, sharesToSell, sellRequestModel.AccountId, buyRequest.ReserveId, buyRequest.AccountId, buyRequest.StockId);
 
+            await _transaction.CreateTransactionAsync(sellRequestModel.Price, sharesToSell, sellRequestModel.AccountId, buyRequest.ReserveId, buyRequest.AccountId, buyRequest.StockId);
+            _logger.LogWarning($"This is Anders's test {sharesToSell} and {buyRequest.AmountOfShares}");
             if (sharesToSell == buyRequest.AmountOfShares) await _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
 
             var ownershipRequest = new OwnershipRequest
