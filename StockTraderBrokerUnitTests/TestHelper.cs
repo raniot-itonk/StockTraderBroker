@@ -22,8 +22,9 @@ namespace StockTraderBrokerUnitTests
             var loggerMock = new Mock<ILogger<SellShares>>();
             var transactionMock = new Mock<ITransaction>();
             var publicShareOwnerControlMock = new Mock<IPublicShareOwnerControlClient>();
+            var bankClientMock = new Mock<IBankClient>();
 
-            var businessLogic = new SellShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object, publicShareOwnerControlMock.Object);
+            var businessLogic = new SellShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object, publicShareOwnerControlMock.Object, bankClientMock.Object);
             return businessLogic;
         }
 
@@ -38,8 +39,9 @@ namespace StockTraderBrokerUnitTests
             var loggerMock = new Mock<ILogger<BuyShares>>();
             var transactionMock = new Mock<ITransaction>();
             var publicShareOwnerControlMock = new Mock<IPublicShareOwnerControlClient>();
+            var bankClientMock = new Mock<IBankClient>();
 
-            var businessLogic = new BuyShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object, publicShareOwnerControlMock.Object);
+            var businessLogic = new BuyShares(stockTraderBrokerMock.Object, loggerMock.Object, instance, transactionMock.Object, publicShareOwnerControlMock.Object, bankClientMock.Object);
             return businessLogic;
         }
     }

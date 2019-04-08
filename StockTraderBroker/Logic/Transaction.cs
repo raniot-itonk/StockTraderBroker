@@ -42,7 +42,7 @@ namespace StockTraderBroker.Logic
             if (!validationResultTaxer.Valid)
             {
                 _logger.LogWarning("Failed to pay taxes with the following error {Error}", validationResultTaxer.ErrorMessage);
-                throw new ValidationException(validationResultTaxer.ErrorMessage;
+                throw new ValidationException(validationResultTaxer.ErrorMessage);
             }
             _logger.LogInformation("Payed taxes, {@stockTaxRequest}", stockTaxRequest);
 
