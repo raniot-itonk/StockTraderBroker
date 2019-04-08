@@ -88,7 +88,7 @@ namespace StockTraderBroker.Logic
             await _transaction.CreateTransactionAsync(sellRequestModel.Price, sharesToSell, sellRequestModel.AccountId, buyRequest.ReserveId, buyRequest.AccountId, buyRequest.StockId);
             if (sharesToSell == buyRequest.AmountOfShares)
             {
-                _logger.LogWarning(@"Trying to remove Reservation buyRequest {@buyRequest} sellRequestModel {@sellRequestModel}", buyRequest, sellRequestModel);
+                _logger.LogInformation(@"Trying to remove Reservation buyRequest {@buyRequest} sellRequestModel {@sellRequestModel}", buyRequest, sellRequestModel);
                 await _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
             }
 
