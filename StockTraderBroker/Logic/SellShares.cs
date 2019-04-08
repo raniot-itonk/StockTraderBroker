@@ -86,6 +86,8 @@ namespace StockTraderBroker.Logic
             sellRequestModel.AmountOfShares -= sharesToSell;
             await _transaction.CreateTransactionAsync(sellRequestModel.Price, sharesToSell, sellRequestModel.AccountId, buyRequest.ReserveId, buyRequest.AccountId, buyRequest.StockId);
 
+            if (sharesToSell == buyRequest.AmountOfShares) await _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
+
             var ownershipRequest = new OwnershipRequest
             {
                 Amount = sharesToSell,

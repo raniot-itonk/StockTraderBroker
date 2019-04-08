@@ -72,6 +72,8 @@ namespace StockTraderBroker.Logic
             buyRequestInput.AmountOfShares -= sharesToBuy;
             await _transaction.CreateTransactionAsync(sellRequest.Price, sharesToBuy, sellRequest.AccountId, buyRequestInput.ReserveId, buyRequestInput.AccountId, buyRequestInput.StockId);
 
+            if (sharesToBuy == buyRequestInput.AmountOfShares) await _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
+
             var ownershipRequest = new OwnershipRequest
             {
                 Amount = sharesToBuy,
@@ -94,11 +96,9 @@ namespace StockTraderBroker.Logic
                 _context.Attach(sellRequest);
                 sellRequest.AmountOfShares = sellRequest.AmountOfShares - buyRequestInput.AmountOfShares;
                 sharesToBuy = buyRequestInput.AmountOfShares;
-                _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
             }
             else
             {
-                if(sellRequest.AmountOfShares == buyRequestInput.AmountOfShares) _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
                 _context.Remove(sellRequest);
                 sharesToBuy = sellRequest.AmountOfShares;
             }
