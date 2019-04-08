@@ -118,7 +118,6 @@ namespace StockTraderBroker.Logic
             {
                 _context.Remove(buyRequest);
                 sharesToSell = buyRequest.AmountOfShares;
-                _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
             }
 
             return sharesToSell;
