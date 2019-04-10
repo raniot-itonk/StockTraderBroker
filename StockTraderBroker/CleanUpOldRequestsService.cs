@@ -29,17 +29,17 @@ namespace StockTraderBroker
         {
             _logger.LogInformation("Clean up old requests service is starting.");
 
-            _timer = new Timer(DoWork, null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(5));
+            _timer = new Timer( RemoveOldRequests, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
 
             return Task.CompletedTask;
         }
 
-        private void DoWork(object state)
+        private async void RemoveOldRequests(object state)
         {
             _logger.LogInformation("Clean up old requests service is working.");
             RemoveBuyRequests();
             RemoveSellRequests();
+            await _context.SaveChangesAsync();
         }
 
         private void RemoveSellRequests()
@@ -53,8 +53,8 @@ namespace StockTraderBroker
         private void RemoveBuyRequests()
         {
             var buyRequests = _context.BuyRequests.Where(request => request.TimeOut < DateTime.Now).ToList();
-            buyRequests.ForEach(request => _bankClient.RemoveReservation(request.ReserveId, "jwtToken"));
             if (!buyRequests.Any()) return;
+            buyRequests.ForEach(request => _bankClient.RemoveReservation(request.ReserveId, "jwtToken"));
             _logger.LogInformation(@"Removed the following buyRequests {@buyRequests} and their reservations", buyRequests);
             _context.RemoveRange(buyRequests);
         }
