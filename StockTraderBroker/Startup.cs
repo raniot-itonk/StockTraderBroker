@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,8 @@ namespace StockTraderBroker
             services.AddTransient<ISellShares, SellShares>();
             services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
             services.AddHostedService<CleanUpOldRequestsService>();
+
+            services.AddHealthChecks().AddDbContextCheck<StockTraderBrokerContext>(tags: new[] { "ready" });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -80,6 +83,7 @@ namespace StockTraderBroker
                 context.Database.Migrate();
             }
 
+            SetupReadyAndLiveHealthChecks(app);
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();
@@ -91,6 +95,20 @@ namespace StockTraderBroker
 
             app.UseHttpsRedirection();
             app.UseMvc();
+        }
+
+        private static void SetupReadyAndLiveHealthChecks(IApplicationBuilder app)
+        {
+            // The readiness check uses all registered checks with the 'ready' tag.
+            app.UseHealthChecks("/health/ready", new HealthCheckOptions()
+            {
+                Predicate = (check) => check.Tags.Contains("ready"),
+            });
+            app.UseHealthChecks("/health/live", new HealthCheckOptions()
+            {
+                // Exclude all checks and return a 200-Ok.
+                Predicate = (_) => false
+            });
         }
 
         private void SetupDatabase(IServiceCollection services)
