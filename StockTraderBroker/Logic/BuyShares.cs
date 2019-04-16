@@ -3,16 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StockTraderBroker.Clients;
 using StockTraderBroker.DB;
+using StockTraderBroker.Exceptions;
 using StockTraderBroker.Models;
 
 namespace StockTraderBroker.Logic
 {
     public interface IBuyShares
     {
-        Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestInput buyRequestInput);
+        Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestModel buyRequestModel);
+        Task RemoveBuyRequest(long id);
+        Task<ActionResult<List<BuyRequestModel>>> GetBuyRequestsForSpecificOwner(Guid ownerId);
     }
 
     public class BuyShares : IBuyShares
@@ -34,23 +39,23 @@ namespace StockTraderBroker.Logic
             _bankClient = bankClient;
         }
 
-        public async Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestInput buyRequestInput)
+        public async Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestModel buyRequestModel)
         {
             var shareTradingInfos = new List<ShareTradingInfo>();
-            var sellerListOrderedByPrice = GetSellerList(buyRequestInput);
+            var sellerListOrderedByPrice = GetSellerList(buyRequestModel);
 
             foreach (var sellRequest in sellerListOrderedByPrice)
             {
-                var shareTradingInfo = await BuyAsManySharesAsPossible(buyRequestInput, sellRequest);
+                var shareTradingInfo = await BuyAsManySharesAsPossible(buyRequestModel, sellRequest);
                 shareTradingInfos.Add( shareTradingInfo);
-                if (buyRequestInput.AmountOfShares == 0)
+                if (buyRequestModel.AmountOfShares == 0)
                     break;
             }
 
             // Add the rest to the database
-            if (buyRequestInput.AmountOfShares != 0)
+            if (buyRequestModel.AmountOfShares != 0)
             {
-                var buyRequest = _mapper.Map<BuyRequest>(buyRequestInput);
+                var buyRequest = _mapper.Map<BuyRequest>(buyRequestModel);
                 _context.BuyRequests.Add(buyRequest);
             }
             _context.SaveChanges();
@@ -58,47 +63,61 @@ namespace StockTraderBroker.Logic
             return shareTradingInfos;
         }
 
-        private IEnumerable<SellRequest> GetSellerList(BuyRequestInput buyRequestInput)
+        public async Task RemoveBuyRequest(long id)
         {
-            return _context.SellRequests.Where(sellRequest =>
-                                sellRequest.StockId == buyRequestInput.StockId &&
-                                sellRequest.TimeOut > DateTime.Now &&
-                                sellRequest.Price <= buyRequestInput.Price).OrderBy(sellRequest => sellRequest.Price).ToList();
+            var buyRequest = _context.BuyRequests.FirstOrDefault(x => x.Id == id);
+            _context.Remove(buyRequest ?? throw new ValidationException("Failed to remove buy request"));
+            await _context.SaveChangesAsync();
+            await _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
         }
 
-        private async Task<ShareTradingInfo> BuyAsManySharesAsPossible(BuyRequestInput buyRequestInput, SellRequest sellRequest)
+        public async Task<ActionResult<List<BuyRequestModel>>> GetBuyRequestsForSpecificOwner(Guid ownerId)
         {
-            var sharesToBuy = CalculateSharesToBuy(buyRequestInput, sellRequest);
-            buyRequestInput.AmountOfShares -= sharesToBuy;
-            await _transaction.CreateTransactionAsync(sellRequest.Price, sharesToBuy, sellRequest.AccountId, buyRequestInput.ReserveId, buyRequestInput.AccountId, buyRequestInput.StockId);
-            if (buyRequestInput.AmountOfShares == 0)
+            var buyRequests = await _context.BuyRequests.Where(request => request.AccountId == ownerId).ToListAsync();
+            return _mapper.Map<List<BuyRequestModel>>(buyRequests);
+        }
+
+        private IEnumerable<SellRequest> GetSellerList(BuyRequestModel buyRequestModel)
+        {
+            return _context.SellRequests.Where(sellRequest =>
+                                sellRequest.StockId == buyRequestModel.StockId &&
+                                sellRequest.TimeOut > DateTime.Now &&
+                                sellRequest.Price <= buyRequestModel.Price).OrderBy(sellRequest => sellRequest.Price).ToList();
+        }
+
+        private async Task<ShareTradingInfo> BuyAsManySharesAsPossible(BuyRequestModel buyRequestModel, SellRequest sellRequest)
+        {
+            var sharesToBuy = CalculateSharesToBuy(buyRequestModel, sellRequest);
+            buyRequestModel.AmountOfShares -= sharesToBuy;
+            await _transaction.CreateTransactionAsync(sellRequest.Price, sharesToBuy, sellRequest.AccountId, buyRequestModel.ReserveId, buyRequestModel.AccountId, buyRequestModel.StockId);
+            if (buyRequestModel.AmountOfShares == 0)
             {
-                _logger.LogInformation(@"Trying to remove Reservation buyRequestInput {@buyRequestInput} sellRequest {@sellRequest}", buyRequestInput, sellRequest);
-                await _bankClient.RemoveReservation(buyRequestInput.ReserveId, "jwtToken");
+                _logger.LogInformation(@"Trying to remove Reservation buyRequestModel {@buyRequestModel} sellRequest {@sellRequest}", buyRequestModel, sellRequest);
+                await _bankClient.RemoveReservation(buyRequestModel.ReserveId, "jwtToken");
             }
 
             var ownershipRequest = new OwnershipRequest
             {
                 Amount = sharesToBuy,
-                Buyer = buyRequestInput.AccountId,
+                Buyer = buyRequestModel.AccountId,
                 Seller = sellRequest.AccountId
             };
-            await _publicShareOwnerControlClient.ChangeOwnership(ownershipRequest, buyRequestInput.StockId, "jwtToken");
+            await _publicShareOwnerControlClient.ChangeOwnership(ownershipRequest, buyRequestModel.StockId, "jwtToken");
 
-            var lastTradedValueRequest = new LastTradedValueRequest { Id = buyRequestInput.StockId, Value = sellRequest.Price };
-            await _publicShareOwnerControlClient.UpdateLastTradedValue(lastTradedValueRequest, buyRequestInput.StockId, "jwtToken");
+            var lastTradedValueRequest = new LastTradedValueRequest { Id = buyRequestModel.StockId, Value = sellRequest.Price };
+            await _publicShareOwnerControlClient.UpdateLastTradedValue(lastTradedValueRequest, buyRequestModel.StockId, "jwtToken");
 
             return new ShareTradingInfo { Price = sellRequest.Price, Amount = sharesToBuy };
         }
 
-        private int CalculateSharesToBuy(BuyRequestInput buyRequestInput, SellRequest sellRequest)
+        private int CalculateSharesToBuy(BuyRequestModel buyRequestModel, SellRequest sellRequest)
         {
             int sharesToBuy;
-            if (sellRequest.AmountOfShares > buyRequestInput.AmountOfShares)
+            if (sellRequest.AmountOfShares > buyRequestModel.AmountOfShares)
             {
                 _context.Attach(sellRequest);
-                sellRequest.AmountOfShares = sellRequest.AmountOfShares - buyRequestInput.AmountOfShares;
-                sharesToBuy = buyRequestInput.AmountOfShares;
+                sellRequest.AmountOfShares = sellRequest.AmountOfShares - buyRequestModel.AmountOfShares;
+                sharesToBuy = buyRequestModel.AmountOfShares;
             }
             else
             {

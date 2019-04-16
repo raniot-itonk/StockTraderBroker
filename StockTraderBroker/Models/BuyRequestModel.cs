@@ -2,7 +2,7 @@
 
 namespace StockTraderBroker.Models
 {
-    public class BuyRequestInput
+    public class BuyRequestModel
     {
         public Guid AccountId { get; set; }
         public long StockId { get; set; }

@@ -55,5 +55,20 @@ namespace StockTraderBroker.Controllers
             _logger.LogInformation("User {User} has {sharesForSale} stocks for sale with stockId {stockId}", ownerId, stockRequests.Sum(request => request.AmountOfShares), stockId);
             return stockRequests;
         }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ValidationResult>> DeleteSellRequest(long id)
+        {
+            try
+            {
+                await _sellShares.RemoveSellRequest(id);
+                _logger.LogInformation("Successfully Removed sell request with id {id}", id);
+                return new ValidationResult { Valid = true, ErrorMessage = "" };
+            }
+            catch (ValidationException e)
+            {
+                return new ValidationResult { Valid = false, ErrorMessage = e.Message };
+            }
+        }
     }
 }

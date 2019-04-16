@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -24,18 +25,43 @@ namespace StockTraderBroker.Controllers
         // Add BuyRequest Request
         //[Authorize("BankingService.UserActions")]
         [HttpPost]
-        public async Task<ActionResult<ValidationResult>> PostBuyRequest(BuyRequestInput buyRequestInput)
+        public async Task<ActionResult<ValidationResult>> PostBuyRequest(BuyRequestModel buyRequestModel)
         {
             try
             {
-                await _buyShares.AddBuyRequest(buyRequestInput);
-                _logger.LogInformation("Successfully added buy request {@buyRequestInput}", buyRequestInput);
+                await _buyShares.AddBuyRequest(buyRequestModel);
+                _logger.LogInformation("Successfully added buy request {@buyRequestModel}", buyRequestModel);
                 return new ValidationResult{Valid = true, ErrorMessage = ""};
             }
             catch (ValidationException e)
             {
                 return new ValidationResult{Valid = false, ErrorMessage = e.Message};
             }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ValidationResult>> DeleteBuyRequest(long id)
+        {
+            try
+            {
+                await _buyShares.RemoveBuyRequest(id);
+                _logger.LogInformation("Successfully Removed buy request with id {id}", id);
+                return new ValidationResult { Valid = true, ErrorMessage = "" };
+            }
+            catch (ValidationException e)
+            {
+                return new ValidationResult { Valid = false, ErrorMessage = e.Message };
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<BuyRequestModel>>> GetBuyRequests([FromQuery] Guid ownerId)
+        {
+            if (ownerId.Equals(Guid.Empty)) return BadRequest("requires OwnerId");
+
+            var stockRequestsWithSpecificOwner = await _buyShares.GetBuyRequestsForSpecificOwner(ownerId);
+            return stockRequestsWithSpecificOwner;
+            
         }
     }
 }
