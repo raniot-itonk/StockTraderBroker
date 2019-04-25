@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using StockTraderBroker.DB;
 using StockTraderBroker.Exceptions;
 using StockTraderBroker.Logic;
 using StockTraderBroker.Models;
@@ -41,7 +42,7 @@ namespace StockTraderBroker.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<SellRequestModel>>> GetSellRequests([FromQuery] Guid ownerId, string stockId)
+        public async Task<ActionResult<List<SellRequest>>> GetSellRequests([FromQuery] Guid ownerId, string stockId)
         {
             if (ownerId.Equals(Guid.Empty)) return BadRequest("requires OwnerId");
 

@@ -15,8 +15,8 @@ namespace StockTraderBroker.Logic
     public interface ISellShares
     {
         Task<List<ShareTradingInfo>> AddSellRequestAsync(SellRequestModel sellRequestModel);
-        Task<List<SellRequestModel>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId);
-        Task<List<SellRequestModel>> GetSaleRequestsForSpecificOwner(Guid ownerId);
+        Task<List<SellRequest>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId);
+        Task<List<SellRequest>> GetSaleRequestsForSpecificOwner(Guid ownerId);
         Task RemoveSellRequest(long id);
     }
 
@@ -39,10 +39,9 @@ namespace StockTraderBroker.Logic
             _bankClient = bankClient;
         }
 
-        public async Task<List<SellRequestModel>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId)
+        public async Task<List<SellRequest>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId)
         {
-            var sellRequests = await _context.SellRequests.Where(request => request.StockId == stockId && request.AccountId == ownerId).ToListAsync();
-            return _mapper.Map<List<SellRequestModel>>(sellRequests);
+            return await _context.SellRequests.Where(request => request.StockId == stockId && request.AccountId == ownerId).ToListAsync();
         }
 
         public async Task RemoveSellRequest(long id)
@@ -51,10 +50,9 @@ namespace StockTraderBroker.Logic
             _context.Remove(sellRequest ?? throw new ValidationException("Failed to remove buy request"));
             await _context.SaveChangesAsync();
         }
-        public async Task<List<SellRequestModel>> GetSaleRequestsForSpecificOwner(Guid ownerId)
+        public async Task<List<SellRequest>> GetSaleRequestsForSpecificOwner(Guid ownerId)
         {
-            var sellRequests = await _context.SellRequests.Where(request => request.AccountId == ownerId).ToListAsync();
-            return _mapper.Map<List<SellRequestModel>>(sellRequests);
+            return await _context.SellRequests.Where(request => request.AccountId == ownerId).ToListAsync();
         }
 
         public async Task<List<ShareTradingInfo>> AddSellRequestAsync(SellRequestModel sellRequestModel)

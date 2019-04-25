@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using StockTraderBroker.DB;
 using StockTraderBroker.Exceptions;
 using StockTraderBroker.Logic;
 using StockTraderBroker.Models;
@@ -55,13 +56,11 @@ namespace StockTraderBroker.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<BuyRequestModel>>> GetBuyRequests([FromQuery] Guid ownerId)
+        public async Task<ActionResult<List<BuyRequest>>> GetBuyRequests([FromQuery] Guid ownerId)
         {
             if (ownerId.Equals(Guid.Empty)) return BadRequest("requires OwnerId");
 
-            var stockRequestsWithSpecificOwner = await _buyShares.GetBuyRequestsForSpecificOwner(ownerId);
-            return stockRequestsWithSpecificOwner;
-            
+            return await _buyShares.GetBuyRequestsForSpecificOwner(ownerId);
         }
     }
 }

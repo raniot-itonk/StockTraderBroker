@@ -17,7 +17,7 @@ namespace StockTraderBroker.Logic
     {
         Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestModel buyRequestModel);
         Task RemoveBuyRequest(long id);
-        Task<ActionResult<List<BuyRequestModel>>> GetBuyRequestsForSpecificOwner(Guid ownerId);
+        Task<List<BuyRequest>> GetBuyRequestsForSpecificOwner(Guid ownerId);
     }
 
     public class BuyShares : IBuyShares
@@ -71,10 +71,9 @@ namespace StockTraderBroker.Logic
             await _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
         }
 
-        public async Task<ActionResult<List<BuyRequestModel>>> GetBuyRequestsForSpecificOwner(Guid ownerId)
+        public async Task<List<BuyRequest>> GetBuyRequestsForSpecificOwner(Guid ownerId)
         {
-            var buyRequests = await _context.BuyRequests.Where(request => request.AccountId == ownerId).ToListAsync();
-            return _mapper.Map<List<BuyRequestModel>>(buyRequests);
+            return await _context.BuyRequests.Where(request => request.AccountId == ownerId).ToListAsync();
         }
 
         private IEnumerable<SellRequest> GetSellerList(BuyRequestModel buyRequestModel)
