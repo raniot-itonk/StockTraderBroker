@@ -66,7 +66,7 @@ namespace StockTraderBroker.Logic
         public async Task RemoveBuyRequest(long id)
         {
             var buyRequest = _context.BuyRequests.FirstOrDefault(x => x.Id == id);
-            _context.Remove(buyRequest ?? throw new ValidationException("Failed to remove buy request"));
+            _context.Remove(buyRequest ?? throw new ValidationException($"Failed to remove buy request with id {id}"));
             await _context.SaveChangesAsync();
             await _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
         }

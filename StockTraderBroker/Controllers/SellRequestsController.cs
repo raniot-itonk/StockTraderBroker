@@ -44,7 +44,10 @@ namespace StockTraderBroker.Controllers
         [HttpGet]
         public async Task<ActionResult<List<SellRequest>>> GetSellRequests([FromQuery] Guid ownerId, string stockId)
         {
-            if (ownerId.Equals(Guid.Empty)) return BadRequest("requires OwnerId");
+            if (ownerId.Equals(Guid.Empty) && stockId != null)
+            {
+                return await _sellShares.GetSaleRequestsForSpecificStock(long.Parse(stockId));
+            }
 
             if (stockId == null)
             {

@@ -17,6 +17,7 @@ namespace StockTraderBroker.Logic
         Task<List<ShareTradingInfo>> AddSellRequestAsync(SellRequestModel sellRequestModel);
         Task<List<SellRequest>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId);
         Task<List<SellRequest>> GetSaleRequestsForSpecificOwner(Guid ownerId);
+        Task<List<SellRequest>> GetSaleRequestsForSpecificStock(long stockId);
         Task RemoveSellRequest(long id);
     }
 
@@ -44,10 +45,15 @@ namespace StockTraderBroker.Logic
             return await _context.SellRequests.Where(request => request.StockId == stockId && request.AccountId == ownerId).ToListAsync();
         }
 
+        public async Task<List<SellRequest>> GetSaleRequestsForSpecificStock(long stockId)
+        {
+            return await _context.SellRequests.Where(request => request.StockId == stockId).ToListAsync();
+        }
+
         public async Task RemoveSellRequest(long id)
         {
             var sellRequest = _context.SellRequests.FirstOrDefault(x => x.Id == id);
-            _context.Remove(sellRequest ?? throw new ValidationException("Failed to remove buy request"));
+            _context.Remove(sellRequest ?? throw new ValidationException($"Failed to remove sell request with id {id}"));
             await _context.SaveChangesAsync();
         }
         public async Task<List<SellRequest>> GetSaleRequestsForSpecificOwner(Guid ownerId)
