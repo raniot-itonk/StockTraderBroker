@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 using StockTraderBroker.Clients;
 using StockTraderBroker.DB;
 
-namespace StockTraderBroker
+namespace StockTraderBroker.HostedServices
 {
     internal class CleanUpOldRequestsService : IHostedService, IDisposable
     {
@@ -17,6 +16,8 @@ namespace StockTraderBroker
         private readonly StockTraderBrokerContext _context;
         private readonly IBankClient _bankClient;
         private Timer _timer;
+        private static readonly Counter TotalBuyRequestsRemovedByTimeout = Metrics.CreateCounter("TotalBuyRequestsRemovedByTimeout", "Total buy requests removed by timeout");
+        private static readonly Counter TotalSellRequestsRemovedByTimeout = Metrics.CreateCounter("TotalSellRequestsRemovedByTimeout", "Total sell requests removed by timeout");
 
         public CleanUpOldRequestsService(ILogger<CleanUpOldRequestsService> logger, StockTraderBrokerContext context, IBankClient bankClient)
         {
@@ -47,6 +48,7 @@ namespace StockTraderBroker
             var sellRequests = _context.SellRequests.Where(request => request.TimeOut < DateTime.Now).ToList();
             if (!sellRequests.Any()) return;
             _logger.LogInformation(@"Removed the following sellRequests {@sellRequests}", sellRequests);
+            TotalSellRequestsRemovedByTimeout.Inc(sellRequests.Count);
             _context.RemoveRange(sellRequests);
         }
 
@@ -55,7 +57,8 @@ namespace StockTraderBroker
             var buyRequests = _context.BuyRequests.Where(request => request.TimeOut < DateTime.Now).ToList();
             if (!buyRequests.Any()) return;
             buyRequests.ForEach(request => _bankClient.RemoveReservation(request.ReserveId, "jwtToken"));
-            _logger.LogInformation(@"Removed the following buyRequests {@buyRequests} and their reservations", buyRequests);
+            _logger.LogInformation(@"Removed the following buyRequests {@buyRequests} and their reservations",buyRequests);
+            TotalBuyRequestsRemovedByTimeout.Inc(buyRequests.Count);
             _context.RemoveRange(buyRequests);
         }
 

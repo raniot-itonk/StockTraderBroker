@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prometheus;
 using StockTraderBroker.Authorization;
 using StockTraderBroker.Clients;
 using StockTraderBroker.DB;
+using StockTraderBroker.HostedServices;
 using StockTraderBroker.Logic;
 using StockTraderBroker.OptionModels;
 using Swashbuckle.AspNetCore.Swagger;
@@ -62,6 +64,7 @@ namespace StockTraderBroker
             services.AddTransient<ISellShares, SellShares>();
             services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
             services.AddHostedService<CleanUpOldRequestsService>();
+            services.AddHostedService<RequestStatsService>();
 
             services.AddHealthChecks().AddDbContextCheck<StockTraderBrokerContext>(tags: new[] { "ready" });
         }
@@ -84,6 +87,8 @@ namespace StockTraderBroker
             }
 
             SetupReadyAndLiveHealthChecks(app);
+
+            app.UseMetricServer();
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();

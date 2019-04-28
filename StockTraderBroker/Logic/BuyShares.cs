@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 using StockTraderBroker.Clients;
 using StockTraderBroker.DB;
 using StockTraderBroker.Exceptions;
@@ -13,13 +13,6 @@ using StockTraderBroker.Models;
 
 namespace StockTraderBroker.Logic
 {
-    public interface IBuyShares
-    {
-        Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestModel buyRequestModel);
-        Task RemoveBuyRequest(long id);
-        Task<List<BuyRequest>> GetBuyRequestsForSpecificOwner(Guid ownerId);
-    }
-
     public class BuyShares : IBuyShares
     {
         private readonly IMapper _mapper;
@@ -28,6 +21,9 @@ namespace StockTraderBroker.Logic
         private readonly IBankClient _bankClient;
         private readonly StockTraderBrokerContext _context;
         private readonly ILogger<BuyShares> _logger;
+
+        public static readonly Counter BuyRequestsCompleted = Metrics.CreateCounter("BuyRequestsCompleted", "Total amount of buy requests completed fully");
+        public static readonly Counter BuySellRequestsRemovedByUser = Metrics.CreateCounter("BuyRequestsRemovedByUser", "Total amount of buy requests removed by the user");
 
         public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient)
         {
@@ -69,6 +65,7 @@ namespace StockTraderBroker.Logic
             _context.Remove(buyRequest ?? throw new ValidationException($"Failed to remove buy request with id {id}"));
             await _context.SaveChangesAsync();
             await _bankClient.RemoveReservation(buyRequest.ReserveId, "jwtToken");
+            BuySellRequestsRemovedByUser.Inc();
         }
 
         public async Task<List<BuyRequest>> GetBuyRequestsForSpecificOwner(Guid ownerId)
@@ -93,6 +90,7 @@ namespace StockTraderBroker.Logic
             {
                 _logger.LogInformation(@"Trying to remove Reservation buyRequestModel {@buyRequestModel} sellRequest {@sellRequest}", buyRequestModel, sellRequest);
                 await _bankClient.RemoveReservation(buyRequestModel.ReserveId, "jwtToken");
+                BuyRequestsCompleted.Inc();
             }
 
             var ownershipRequest = new OwnershipRequest
@@ -122,6 +120,7 @@ namespace StockTraderBroker.Logic
             {
                 _context.Remove(sellRequest);
                 sharesToBuy = sellRequest.AmountOfShares;
+                SellShares.SellRequestsCompleted.Inc();
             }
 
             return sharesToBuy;

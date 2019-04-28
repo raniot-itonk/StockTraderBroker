@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 using StockTraderBroker.Clients;
 using StockTraderBroker.DB;
 using StockTraderBroker.Exceptions;
@@ -12,15 +13,6 @@ using StockTraderBroker.Models;
 
 namespace StockTraderBroker.Logic
 {
-    public interface ISellShares
-    {
-        Task<List<ShareTradingInfo>> AddSellRequestAsync(SellRequestModel sellRequestModel);
-        Task<List<SellRequest>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId);
-        Task<List<SellRequest>> GetSaleRequestsForSpecificOwner(Guid ownerId);
-        Task<List<SellRequest>> GetSaleRequestsForSpecificStock(long stockId);
-        Task RemoveSellRequest(long id);
-    }
-
     public class SellShares : ISellShares
     {
         private readonly IMapper _mapper;
@@ -29,6 +21,9 @@ namespace StockTraderBroker.Logic
         private readonly IBankClient _bankClient;
         private readonly StockTraderBrokerContext _context;
         private readonly ILogger<SellShares> _logger;
+
+        public static readonly Counter SellRequestsCompleted = Metrics.CreateCounter("SellRequestsCompleted", "Total amount of sell requests completed fully");
+        public static readonly Counter SellRequestsRemovedByUser = Metrics.CreateCounter("SellRequestsRemovedByUser", "Total amount of sell requests removed by the user");
 
         public SellShares(StockTraderBrokerContext context, ILogger<SellShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient)
         {
@@ -55,6 +50,7 @@ namespace StockTraderBroker.Logic
             var sellRequest = _context.SellRequests.FirstOrDefault(x => x.Id == id);
             _context.Remove(sellRequest ?? throw new ValidationException($"Failed to remove sell request with id {id}"));
             await _context.SaveChangesAsync();
+            SellRequestsRemovedByUser.Inc();
         }
         public async Task<List<SellRequest>> GetSaleRequestsForSpecificOwner(Guid ownerId)
         {
@@ -71,7 +67,10 @@ namespace StockTraderBroker.Logic
                 var shareTradingInfo = await SellAsManySharesAsPossible(buyerRequest, sellRequestModel);
                 shareTradingInfos.Add(shareTradingInfo);
                 if (sellRequestModel.AmountOfShares == 0)
+                {
+                    SellRequestsCompleted.Inc();
                     break;
+                }
             }
 
             // Add the rest to the database
@@ -131,6 +130,7 @@ namespace StockTraderBroker.Logic
             {
                 _context.Remove(buyRequest);
                 sharesToSell = buyRequest.AmountOfShares;
+                BuyShares.BuyRequestsCompleted.Inc();
             }
 
             return sharesToSell;
