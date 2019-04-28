@@ -30,6 +30,7 @@ namespace StockTraderBroker.Controllers
         {
             try
             {
+                buyRequestModel.TimeOut = buyRequestModel.TimeOut.ToUniversalTime();
                 await _buyShares.AddBuyRequest(buyRequestModel);
                 _logger.LogInformation("Successfully added buy request {@buyRequestModel}", buyRequestModel);
                 return new ValidationResult{Valid = true, ErrorMessage = ""};

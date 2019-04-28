@@ -45,7 +45,7 @@ namespace StockTraderBroker.HostedServices
 
         private void RemoveSellRequests()
         {
-            var sellRequests = _context.SellRequests.Where(request => request.TimeOut < DateTime.Now).ToList();
+            var sellRequests = _context.SellRequests.Where(request => request.TimeOut < DateTime.Now.ToUniversalTime()).ToList();
             if (!sellRequests.Any()) return;
             _logger.LogInformation(@"Removed the following sellRequests {@sellRequests}", sellRequests);
             SellRequestsRemovedByTimeout.Inc(sellRequests.Count);
@@ -54,7 +54,7 @@ namespace StockTraderBroker.HostedServices
 
         private void RemoveBuyRequests()
         {
-            var buyRequests = _context.BuyRequests.Where(request => request.TimeOut < DateTime.Now).ToList();
+            var buyRequests = _context.BuyRequests.Where(request => request.TimeOut < DateTime.Now.ToUniversalTime()).ToList();
             if (!buyRequests.Any()) return;
             buyRequests.ForEach(request => _bankClient.RemoveReservation(request.ReserveId, "jwtToken"));
             _logger.LogInformation(@"Removed the following buyRequests {@buyRequests} and their reservations",buyRequests);

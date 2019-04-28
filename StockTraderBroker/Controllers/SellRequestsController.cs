@@ -31,6 +31,7 @@ namespace StockTraderBroker.Controllers
         {
             try
             {
+                sellRequestModel.TimeOut = sellRequestModel.TimeOut.ToUniversalTime();
                 await _sellShares.AddSellRequestAsync(sellRequestModel);
                 _logger.LogInformation("Successfully added sell request {@sellRequestModel}", sellRequestModel);
                 return new ValidationResult { Valid = true, ErrorMessage = "" };
