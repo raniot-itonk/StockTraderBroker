@@ -16,8 +16,8 @@ namespace StockTraderBroker.HostedServices
         private readonly StockTraderBrokerContext _context;
         private readonly IBankClient _bankClient;
         private Timer _timer;
-        private static readonly Counter TotalBuyRequestsRemovedByTimeout = Metrics.CreateCounter("TotalBuyRequestsRemovedByTimeout", "Total buy requests removed by timeout");
-        private static readonly Counter TotalSellRequestsRemovedByTimeout = Metrics.CreateCounter("TotalSellRequestsRemovedByTimeout", "Total sell requests removed by timeout");
+        private static readonly Counter BuyRequestsRemovedByTimeout = Metrics.CreateCounter("BuyRequestsRemovedByTimeout", "Total buy requests removed by timeout");
+        private static readonly Counter SellRequestsRemovedByTimeout = Metrics.CreateCounter("SellRequestsRemovedByTimeout", "Total sell requests removed by timeout");
 
         public CleanUpOldRequestsService(ILogger<CleanUpOldRequestsService> logger, StockTraderBrokerContext context, IBankClient bankClient)
         {
@@ -48,7 +48,7 @@ namespace StockTraderBroker.HostedServices
             var sellRequests = _context.SellRequests.Where(request => request.TimeOut < DateTime.Now).ToList();
             if (!sellRequests.Any()) return;
             _logger.LogInformation(@"Removed the following sellRequests {@sellRequests}", sellRequests);
-            TotalSellRequestsRemovedByTimeout.Inc(sellRequests.Count);
+            SellRequestsRemovedByTimeout.Inc(sellRequests.Count);
             _context.RemoveRange(sellRequests);
         }
 
@@ -58,7 +58,7 @@ namespace StockTraderBroker.HostedServices
             if (!buyRequests.Any()) return;
             buyRequests.ForEach(request => _bankClient.RemoveReservation(request.ReserveId, "jwtToken"));
             _logger.LogInformation(@"Removed the following buyRequests {@buyRequests} and their reservations",buyRequests);
-            TotalBuyRequestsRemovedByTimeout.Inc(buyRequests.Count);
+            BuyRequestsRemovedByTimeout.Inc(buyRequests.Count);
             _context.RemoveRange(buyRequests);
         }
 
