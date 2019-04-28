@@ -119,7 +119,7 @@ namespace StockTraderBroker
         private void SetupDatabase(IServiceCollection services)
         {
             services.AddDbContext<StockTraderBrokerContext>
-                (options => options.UseSqlServer(Configuration.GetConnectionString("StockTraderBrokerDatabase")));
+                (options => options.UseSqlServer(Configuration.GetConnectionString("StockTraderBrokerDatabase")), ServiceLifetime.Transient);
         }
     }
 }
