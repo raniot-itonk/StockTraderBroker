@@ -14,8 +14,8 @@ namespace StockTraderBroker.HostedServices
         private readonly ILogger _logger;
         private readonly StockTraderBrokerContext _context;
         private Timer _timer;
-        private static readonly Gauge CurrentBuyRequests = Metrics.CreateGauge("TotalBuyRequestsRemovedByTimeout", "Total buy requests removed by timeout");
-        private static readonly Gauge CurrentSellRequests = Metrics.CreateGauge("TotalSellRequestsRemovedByTimeout", "Total sell requests removed by timeout");
+        private static readonly Gauge CurrentBuyRequests = Metrics.CreateGauge("CurrentBuyRequests", "Current buy requests");
+        private static readonly Gauge CurrentSellRequests = Metrics.CreateGauge("CurrentSellRequests", "Current sell requests");
 
         public RequestStatsService(ILogger<RequestStatsService> logger, StockTraderBrokerContext context)
         {
