@@ -56,6 +56,7 @@ namespace StockTraderBroker
             //    //    policy.Requirements.Add(new HasScopeRequirement("BankingService.broker&taxer", Configuration["IdentityServerBaseAddress"])));
             //});
             services.Configure<Services>(Configuration.GetSection(nameof(Services)));
+            services.Configure<RabbitMqOptions>(Configuration.GetSection(nameof(RabbitMqOptions)));
             services.AddScoped<IBankClient, BankClient>();
             services.AddScoped<ITobinTaxerClient, TobinTaxerClient>();
             services.AddScoped<IPublicShareOwnerControlClient, PublicShareOwnerControlClient>();
@@ -65,6 +66,7 @@ namespace StockTraderBroker
             services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
             services.AddHostedService<CleanUpOldRequestsService>();
             services.AddHostedService<RequestStatsService>();
+            services.AddSingleton<IRabbitMqClient, RabbitMqClient>();
 
             services.AddHealthChecks().AddDbContextCheck<StockTraderBrokerContext>(tags: new[] { "ready" });
         }

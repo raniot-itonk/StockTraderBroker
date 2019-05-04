@@ -13,6 +13,7 @@ namespace StockTraderBroker.Clients
     {
         Task ChangeOwnership(OwnershipRequest request, long id, string jwtToken);
         Task UpdateLastTradedValue(LastTradedValueRequest request, long id, string jwtToken);
+        Task<string> GetStockName(long id, string jwtToken);
     }
 
     public class PublicShareOwnerControlClient : IPublicShareOwnerControlClient
@@ -37,6 +38,13 @@ namespace StockTraderBroker.Clients
                 _publicShareOwnerControl.BaseAddress
                     .AppendPathSegments(_publicShareOwnerControl.PublicSharePath.Stock, id, "LastTradedValue")
                     .WithOAuthBearerToken(jwtToken).PutJsonAsync(request));
+        }
+        public async Task<string> GetStockName(long id, string jwtToken)
+        {
+            return await PolicyHelper.ThreeRetriesAsync().ExecuteAsync(() =>
+                _publicShareOwnerControl.BaseAddress
+                    .AppendPathSegments(_publicShareOwnerControl.PublicSharePath.Stock, id, "name")
+                    .WithOAuthBearerToken(jwtToken).GetStringAsync());
         }
     }
 }

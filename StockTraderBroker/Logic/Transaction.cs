@@ -18,12 +18,16 @@ namespace StockTraderBroker.Logic
         private readonly ILogger<Transaction> _logger;
         private readonly ITobinTaxerClient _tobinTaxerClient;
         private readonly IBankClient _bankClient;
+        private readonly IRabbitMqClient _rabbitMqClient;
+        private readonly IPublicShareOwnerControlClient _publicShareOwnerControlClient;
 
-        public Transaction(ILogger<Transaction> logger,ITobinTaxerClient tobinTaxerClient, IBankClient bankClient)
+        public Transaction(ILogger<Transaction> logger, ITobinTaxerClient tobinTaxerClient, IBankClient bankClient, IRabbitMqClient rabbitMqClient, IPublicShareOwnerControlClient publicShareOwnerControlClient)
         {
             _logger = logger;
             _tobinTaxerClient = tobinTaxerClient;
             _bankClient = bankClient;
+            _rabbitMqClient = rabbitMqClient;
+            _publicShareOwnerControlClient = publicShareOwnerControlClient;
         }
 
         public async Task CreateTransactionAsync(double price, int amount, Guid sellerId, Guid reservationId, Guid buyerId, long stockId)
@@ -62,6 +66,10 @@ namespace StockTraderBroker.Logic
                 throw new ValidationException(validationResultTransfer.ErrorMessage);
             }
             _logger.LogInformation("transferred from money from buyer to seller {@transferRequest}", transferRequest);
+            var stockName = await _publicShareOwnerControlClient.GetStockName(stockId, "jwtToken");
+            var shareOrShares = amount == 1 ? "share" : "shares";
+            _rabbitMqClient.SendMessage(new HistoryMessage{Event = "SoldShares",EventMessage = $"Sold {amount} {stockName} {shareOrShares} for {totalAmount}", User = sellerId, Timestamp = DateTime.UtcNow });
+            _rabbitMqClient.SendMessage(new HistoryMessage{Event = "BoughtShares",EventMessage = $"Bought {amount} {stockName} {shareOrShares} for {totalAmount}", User = buyerId, Timestamp = DateTime.UtcNow });
         }
     }
 }
