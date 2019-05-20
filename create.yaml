@@ -18,6 +18,16 @@ spec:
         env:
         - name: ASPNETCORE_ENVIRONMENT
           value: "Test"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 80
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 80
+          periodSeconds: 60
 ---
 apiVersion: v1
 kind: Service
