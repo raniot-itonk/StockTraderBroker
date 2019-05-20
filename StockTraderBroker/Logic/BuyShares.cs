@@ -19,13 +19,14 @@ namespace StockTraderBroker.Logic
         private readonly ITransaction _transaction;
         private readonly IPublicShareOwnerControlClient _publicShareOwnerControlClient;
         private readonly IBankClient _bankClient;
+        private readonly IRabbitMqClient _rabbitMqClient;
         private readonly StockTraderBrokerContext _context;
         private readonly ILogger<BuyShares> _logger;
 
         public static readonly Counter BuyRequestsCompleted = Metrics.CreateCounter("BuyRequestsCompleted", "Total amount of buy requests completed fully");
         public static readonly Counter BuySellRequestsRemovedByUser = Metrics.CreateCounter("BuyRequestsRemovedByUser", "Total amount of buy requests removed by the user");
 
-        public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient)
+        public BuyShares(StockTraderBrokerContext context, ILogger<BuyShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient, IRabbitMqClient rabbitMqClient)
         {
             _context = context;
             _logger = logger;
@@ -33,10 +34,13 @@ namespace StockTraderBroker.Logic
             _transaction = transaction;
             _publicShareOwnerControlClient = publicShareOwnerControlClient;
             _bankClient = bankClient;
+            _rabbitMqClient = rabbitMqClient;
         }
 
         public async Task<List<ShareTradingInfo>> AddBuyRequest(BuyRequestModel buyRequestModel)
         {
+            var stockName = _publicShareOwnerControlClient.GetStockName(buyRequestModel.StockId, "jwtToken");
+            _rabbitMqClient.SendMessage(new HistoryMessage { Event = "AddedBuyRequest", EventMessage = $"Sent buy request for {stockName} with amount {buyRequestModel.AmountOfShares}", User = buyRequestModel.AccountId, Timestamp = DateTime.UtcNow });
             var shareTradingInfos = new List<ShareTradingInfo>();
             var sellerListOrderedByPrice = GetSellerList(buyRequestModel);
 

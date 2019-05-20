@@ -19,13 +19,14 @@ namespace StockTraderBroker.Logic
         private readonly ITransaction _transaction;
         private readonly IPublicShareOwnerControlClient _publicShareOwnerControlClient;
         private readonly IBankClient _bankClient;
+        private readonly IRabbitMqClient _rabbitMqClient;
         private readonly StockTraderBrokerContext _context;
         private readonly ILogger<SellShares> _logger;
 
         public static readonly Counter SellRequestsCompleted = Metrics.CreateCounter("SellRequestsCompleted", "Total amount of sell requests completed fully");
         public static readonly Counter SellRequestsRemovedByUser = Metrics.CreateCounter("SellRequestsRemovedByUser", "Total amount of sell requests removed by the user");
 
-        public SellShares(StockTraderBrokerContext context, ILogger<SellShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient)
+        public SellShares(StockTraderBrokerContext context, ILogger<SellShares> logger, IMapper mapper, ITransaction transaction, IPublicShareOwnerControlClient publicShareOwnerControlClient, IBankClient bankClient, IRabbitMqClient rabbitMqClient)
         {
             _context = context;
             _logger = logger;
@@ -33,6 +34,7 @@ namespace StockTraderBroker.Logic
             _transaction = transaction;
             _publicShareOwnerControlClient = publicShareOwnerControlClient;
             _bankClient = bankClient;
+            _rabbitMqClient = rabbitMqClient;
         }
 
         public async Task<List<SellRequest>> GetSaleRequestsForSpecificOwnerAndStock(Guid ownerId, long stockId)
@@ -59,6 +61,9 @@ namespace StockTraderBroker.Logic
 
         public async Task<List<ShareTradingInfo>> AddSellRequestAsync(SellRequestModel sellRequestModel)
         {
+            var stockName = _publicShareOwnerControlClient.GetStockName(sellRequestModel.StockId, "jwtToken");
+            _rabbitMqClient.SendMessage(new HistoryMessage { Event = "AddedBuyRequest", EventMessage = $"Sent sell request for {stockName} for {sellRequestModel.AmountOfShares} shares", User = sellRequestModel.AccountId, Timestamp = DateTime.UtcNow });
+
             var shareTradingInfos = new List<ShareTradingInfo>();
             var buyerListOrderedByPrice = GetBuyerList(sellRequestModel);
 
