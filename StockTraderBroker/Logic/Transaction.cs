@@ -68,8 +68,8 @@ namespace StockTraderBroker.Logic
             _logger.LogInformation("transferred from money from buyer to seller {@transferRequest}", transferRequest);
             var stockName = await _publicShareOwnerControlClient.GetStockName(stockId, "jwtToken");
             var shareOrShares = amount == 1 ? "share" : "shares";
-            _rabbitMqClient.SendMessage(new HistoryMessage{Event = "SoldShares",EventMessage = $"Sold {amount} {stockName} {shareOrShares} for {totalAmount}", User = sellerId, Timestamp = DateTime.UtcNow });
-            _rabbitMqClient.SendMessage(new HistoryMessage{Event = "BoughtShares",EventMessage = $"Bought {amount} {stockName} {shareOrShares} for {totalAmount}", User = buyerId, Timestamp = DateTime.UtcNow });
+            _rabbitMqClient.SendMessage(new HistoryMessage{Event = "SoldShares",EventMessage = $"Sold {amount} {stockName} {shareOrShares} for ${totalAmount}", User = sellerId, Timestamp = DateTime.UtcNow });
+            _rabbitMqClient.SendMessage(new HistoryMessage{Event = "BoughtShares",EventMessage = $"Bought {amount} {stockName} {shareOrShares} for ${totalAmount}", User = buyerId, Timestamp = DateTime.UtcNow });
         }
     }
 }
