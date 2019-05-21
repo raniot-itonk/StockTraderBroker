@@ -61,7 +61,7 @@ namespace StockTraderBroker.Logic
 
         public async Task<List<ShareTradingInfo>> AddSellRequestAsync(SellRequestModel sellRequestModel)
         {
-            var stockName = _publicShareOwnerControlClient.GetStockName(sellRequestModel.StockId, "jwtToken");
+            var stockName = await _publicShareOwnerControlClient.GetStockName(sellRequestModel.StockId, "jwtToken");
             _rabbitMqClient.SendMessage(new HistoryMessage { Event = "AddedBuyRequest", EventMessage = $"Sent sell request for {stockName} for {sellRequestModel.AmountOfShares} shares", User = sellRequestModel.AccountId, Timestamp = DateTime.UtcNow });
 
             var shareTradingInfos = new List<ShareTradingInfo>();
